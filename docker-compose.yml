@@ -1,0 +1,51 @@
+services:
+  poll:
+    build: ./poll
+    ports:
+      - 5000:80
+    networks:
+      - poll-tier
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - poll-tier
+      - back-tier
+
+  worker:
+    build: ./worker
+    networks:
+      - back-tier
+
+  db:
+    image: postgres
+    ports: 
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - result-tier
+      - back-tier
+    
+  result:
+    build: ./result
+    ports:
+      - 5001:80
+    networks:
+      - result-tier
+
+networks:
+  poll-tier:
+    driver: bridge
+  result-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
+
+volumes: 
+  db-data:
